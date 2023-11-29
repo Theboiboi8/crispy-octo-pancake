@@ -11,6 +11,7 @@ import logging
 import os
 import platform
 import random
+import secrets
 import sys
 
 import aiosqlite
@@ -68,6 +69,8 @@ It is recommended to use slash commands and therefore not use prefix commands.
 
 If you want to use prefix commands, make sure to also enable the intent below in the Discord developer portal.
 """
+
+
 # intents.message_content = True
 
 # Setup both of the loggers
@@ -143,10 +146,10 @@ class DiscordBot(commands.Bot):
 
     async def init_db(self) -> None:
         async with aiosqlite.connect(
-            f"{os.path.realpath(os.path.dirname(__file__))}/database/database.db"
+                f"{os.path.realpath(os.path.dirname(__file__))}/database/database.db"
         ) as db:
             with open(
-                f"{os.path.realpath(os.path.dirname(__file__))}/database/schema.sql"
+                    f"{os.path.realpath(os.path.dirname(__file__))}/database/schema.sql"
             ) as file:
                 await db.executescript(file.read())
             await db.commit()
@@ -170,10 +173,10 @@ class DiscordBot(commands.Bot):
     @tasks.loop(minutes=1.0)
     async def status_task(self) -> None:
         """
-        Setup the game status task of the bot.
+        Set up the game status task of the bot.
         """
-        statuses = ["with you!", "with Krypton!", "with humans!"]
-        await self.change_presence(activity=discord.Game(random.choice(statuses)))
+        statuses = ["children in Kenya...", "you sleep...", "your mother!"]
+        await self.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=random.choice(statuses)))
 
     @status_task.before_loop
     async def before_status_task(self) -> None:
@@ -186,13 +189,17 @@ class DiscordBot(commands.Bot):
         """
         This will just be executed when the bot starts the first time.
         """
+        self.logger.info("----------[ Account Info ]---------")
         self.logger.info(f"Logged in as {self.user.name}")
+        self.logger.info("----------[ Version Info ]---------")
         self.logger.info(f"discord.py API version: {discord.__version__}")
         self.logger.info(f"Python version: {platform.python_version()}")
         self.logger.info(
             f"Running on: {platform.system()} {platform.release()} ({os.name})"
         )
-        self.logger.info("-------------------")
+        self.logger.info("----------[ Session Info ]---------")
+        self.logger.info(f"Session ID: {secrets.token_hex(32)}")
+        self.logger.info("----------[ Extension Info ]---------")
         await self.init_db()
         await self.load_cogs()
         self.status_task.start()
@@ -201,6 +208,7 @@ class DiscordBot(commands.Bot):
                 f"{os.path.realpath(os.path.dirname(__file__))}/database/database.db"
             )
         )
+        self.logger.info("----------[ Runtime Info ]---------")
 
     async def on_message(self, message: discord.Message) -> None:
         """
@@ -262,16 +270,16 @@ class DiscordBot(commands.Bot):
         elif isinstance(error, commands.MissingPermissions):
             embed = discord.Embed(
                 description="You are missing the permission(s) `"
-                + ", ".join(error.missing_permissions)
-                + "` to execute this command!",
+                            + ", ".join(error.missing_permissions)
+                            + "` to execute this command!",
                 color=0xE02B2B,
             )
             await context.send(embed=embed)
         elif isinstance(error, commands.BotMissingPermissions):
             embed = discord.Embed(
                 description="I am missing the permission(s) `"
-                + ", ".join(error.missing_permissions)
-                + "` to fully perform this command!",
+                            + ", ".join(error.missing_permissions)
+                            + "` to fully perform this command!",
                 color=0xE02B2B,
             )
             await context.send(embed=embed)
